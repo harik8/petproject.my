@@ -1,0 +1,10 @@
+serverAddr = "frps.forexample.link"
+serverPort = 7000
+
+[[proxies]]
+name = "nginx"
+type = "http"
+localIP = "127.0.0.1"
+localPort = 32657
+customDomains = ["nginx.forexample.link"]
+
