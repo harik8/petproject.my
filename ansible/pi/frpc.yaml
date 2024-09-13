@@ -1,0 +1,93 @@
+---
+- name: Install and configure FRPC
+  hosts: pi-0
+  become: yes
+  vars:
+    frp_version: "0.60.0"
+    frp_file: "frp_{{ frp_version }}_linux_arm64.tar.gz"
+    frp_download_url: "https://github.com/fatedier/frp/releases/download/v{{ frp_version }}/{{ frp_file }}"
+
+  tasks:
+
+    - name: Ensure the system is up-to-date
+      apt:
+        update_cache: yes
+
+    - name: Install wget
+      apt:
+        name: wget
+        state: present
+
+    - name: Download FRP tar.gz file
+      get_url:
+        url: "{{ frp_download_url }}"
+        dest: "/tmp/{{ frp_file }}"
+
+    - name: Extract FRP tar.gz file
+      unarchive:
+        src: "/tmp/{{ frp_file }}"
+        dest: "/opt/"
+        remote_src: yes
+
+    - name: Move FRPC binary to /usr/local/bin
+      copy:
+        src: "/opt/frp_{{ frp_version }}_linux_arm64/{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        mode: '0755'
+        remote_src: yes
+      with_items:
+        - frpc
+
+    - name: Create configuration directory for FRP
+      file:
+        path: /etc/frp
+        state: directory
+        mode: '0755'
+
+    - name: Copy FRPC sample configuration files
+      copy:
+        src: "/opt/frp_{{ frp_version }}_linux_amd64/{{ item }}"
+        dest: "/etc/frp/{{ item }}"
+        remote_src: yes
+      with_items:
+        - frpc.toml
+
+    - name: Modify frpc conf
+      copy:
+        src: frpc.toml
+        dest: /etc/frp/frpc.toml
+
+    - name: Clean up downloaded files
+      file:
+        path: "/tmp/{{ frp_file }}"
+        state: absent
+
+    - name: Create systemd service file for FRPC (FRP Client)
+      copy:
+        dest: /etc/systemd/system/frpc.service
+        content: |
+          [Unit]
+          Description=FRP Client Service
+          After=network.target
+
+          [Service]
+          Type=simple
+          ExecStart=/usr/local/bin/frpc -c /etc/frp/frpc.toml
+          ExecReload=/usr/local/bin/frpc reload -c /etc/frp/frpc.toml
+          Restart=on-failure
+          RestartSec=5s
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd to apply new service files
+      command: systemctl daemon-reload
+
+    - name: Enable and start FRPC service
+      systemd:
+        name: frpc
+        enabled: yes
+        state: started
+
+    - name: Restart the service
+      command: systemctl restart frpc
