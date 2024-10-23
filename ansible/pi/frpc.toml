@@ -1,10 +1,10 @@
-serverAddr = "frps.forexample.link"
+serverAddr = "frps.petproject.my"
 serverPort = 7000
 
 [[proxies]]
-name = "nginx"
+name = "frp"
 type = "http"
 localIP = "127.0.0.1"
-localPort = 32657
-customDomains = ["nginx.forexample.link"]
+localPort = 30483
+customDomains = ["frp.petproject.my"]
 

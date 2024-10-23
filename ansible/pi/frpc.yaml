@@ -2,10 +2,9 @@
 - name: Install and configure FRPC
   hosts: pi-0
   become: yes
-  vars:
-    frp_version: "0.60.0"
-    frp_file: "frp_{{ frp_version }}_linux_arm64.tar.gz"
-    frp_download_url: "https://github.com/fatedier/frp/releases/download/v{{ frp_version }}/{{ frp_file }}"
+
+  vars_files:
+    - "vars/frpc.yaml"
 
   tasks:
 
