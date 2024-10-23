@@ -18,8 +18,9 @@
 
     - name: Assume role to get AWS credentials
       shell:
-        aws sts assume-role --role-arn arn:aws:iam::212104571535:role/service-role/r53-role-g7qf0ica --role-session-name certbot
+        "aws sts assume-role --role-arn arn:aws:iam::{{ aws_account_id }}:role/service-role/{{ role_name }} --role-session-name certbot"
       register: creds
+      no_log: true
 
     - name: Set AWS Access Key ID
       set_fact:
@@ -38,7 +39,7 @@
 
     - name: Obtain SSL certificate using Certbot and Route 53
       command: >
-        ~/certbot/bin/certbot certonly --dns-route53 -d forexample.link -d *.forexample.link -n --agree-tos -m khprasaad+certbot@gmail.com
+        ~/certbot/bin/certbot certonly --dns-route53 -d petproject.my -d *.petproject.my -n --agree-tos -m {{ mail_address }}
       environment:
         AWS_ACCESS_KEY_ID: "{{ AWS_ACCESS_KEY_ID }}"
         AWS_SECRET_ACCESS_KEY: "{{ AWS_SECRET_ACCESS_KEY }}"
@@ -54,18 +55,18 @@
 
     - name: Configure Nginx as a reverse proxy
       copy:
-        dest: /etc/nginx/conf.d/forexample.link.conf
+        dest: /etc/nginx/conf.d/petproject.my.conf
         content: |
           server {
               listen 80;
-              server_name *.forexample.link;
+              server_name *.petproject.my;
               return 301 https://$server_name$request_uri;
           }
           server {
               listen 443 ssl;
-              server_name *.forexample.link;
-              ssl_certificate /etc/letsencrypt/live/forexample.link/fullchain.pem;
-              ssl_certificate_key /etc/letsencrypt/live/forexample.link/privkey.pem;
+              server_name *.petproject.my;
+              ssl_certificate /etc/letsencrypt/live/petproject.my/fullchain.pem;
+              ssl_certificate_key /etc/letsencrypt/live/petproject.my/privkey.pem;
               location / {
                   proxy_pass http://127.0.0.1:8080;
                   proxy_set_header Host $host;
@@ -88,18 +89,18 @@
 
     - name: Download FRP tar.gz file
       get_url:
-        url: "https://github.com/fatedier/frp/releases/download/v0.60.0/frp_0.60.0_linux_arm64.tar.gz"
-        dest: /tmp/frp_0.60.0_linux_arm64.tar.gz
+        url: "https://github.com/fatedier/frp/releases/download/v{{ frp_version }}/frp_{{ frp_version }}_linux_arm64.tar.gz"
+        dest: "/tmp/frp_{{ frp_version }}_linux_arm64.tar.gz"
 
     - name: Extract FRP tar.gz file
       unarchive:
-        src: /tmp/frp_0.60.0_linux_arm64.tar.gz
+        src: "/tmp/frp_{{ frp_version }}_linux_arm64.tar.gz"
         dest: /opt/
         remote_src: yes
 
     - name: Move FRP binary to /usr/local/bin
       copy:
-        src: /opt/frp_0.60.0_linux_arm64/frps
+        src: "/opt/frp_{{ frp_version }}_linux_arm64/frps"
         dest: /usr/local/bin/frps
         mode: '0755'
 
@@ -111,7 +112,7 @@
 
     - name: Copy FRP server configuration
       copy:
-        src: /opt/frp_0.60.0_linux_arm64/frps.toml
+        src: "/opt/frp_{{ frp_version }}_linux_arm64/frps.toml"
         dest: /etc/frp/frps.toml
         mode: '0644'
 
@@ -121,6 +122,8 @@
         content: |
           bindPort = 7000
           vhostHTTPPort = 8080
+          webServer.addr = "0.0.0.0"
+          webServer.port = 7500
 
     - name: Create systemd service for FRPS
       copy:
