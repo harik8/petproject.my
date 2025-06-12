@@ -5,7 +5,7 @@
 replicaCount: 2
 
 image:
-  repository: harik8/gh-runner
+  repository: harik8/gha-runner
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
@@ -63,6 +63,17 @@ resources:
     cpu: 50m
     memory: 64Mi
 
+# livenessProbe:
+#   httpGet:
+#     path: /
+#     port: http
+# readinessProbe:
+#   exec:
+#     command:
+#       - /bin/sh
+#       - -c
+#       - sed -i "s/\$HOSTNAME/$HOSTNAME/g; s/\$IP_ADDR/$IP_ADDR/g" /usr/share/nginx/html/index.html
+
 autoscaling:
   enabled: false
   minReplicas: 1
@@ -91,5 +102,3 @@ rbac:
 env:
   - name: REPO_URL
     value: https://github.com/harik8/petproject.my
-  - name: RUNNER_TOKEN
-    value: AB5********************
