@@ -63,17 +63,6 @@ resources:
     cpu: 50m
     memory: 64Mi
 
-# livenessProbe:
-#   httpGet:
-#     path: /
-#     port: http
-# readinessProbe:
-#   exec:
-#     command:
-#       - /bin/sh
-#       - -c
-#       - sed -i "s/\$HOSTNAME/$HOSTNAME/g; s/\$IP_ADDR/$IP_ADDR/g" /usr/share/nginx/html/index.html
-
 autoscaling:
   enabled: false
   minReplicas: 1
@@ -103,6 +92,4 @@ env:
   - name: REPO_URL
     value: https://github.com/harik8/petproject.my
   - name: RUNNER_TOKEN
-    value: AB52EULQ7ZZIGGPUIJ5YT53IJKIEK
-  - name: TEST
-    value: test1
+    value: AB5********************
