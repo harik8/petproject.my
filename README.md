@@ -1,2 +1,2 @@
-# home-rack
-The repository contains my home setup using raspberry pi.
+# petproject.my
+This repository contains my local K8s setup.
