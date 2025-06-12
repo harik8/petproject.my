@@ -108,5 +108,5 @@ jobs:
           --create-namespace \
           --namespace ${{ matrix.apps }} \
           --set image.tag=latest \
-          -f ${{ matrix.apps }}/apps/.helm/values.yaml -f ${{ matrix.apps }}/apps/.helm/sandbox/values.yaml \
+          -f apps/${{ matrix.apps }}/.helm/sandbox/values.yaml -f apps/${{ matrix.apps }}/.helm/values.yaml \
           ${{ matrix.apps }} .helm-tmpl
