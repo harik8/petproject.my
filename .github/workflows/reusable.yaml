@@ -32,7 +32,7 @@ jobs:
         modified_apps=$(git diff HEAD HEAD~ --name-only \
           | grep '/' \
           | cut -d'/' -f2 \
-          | grep -vE '^(\.github)$' \
+          | grep -vE '^(workflows)$' \
           | sort -u \
           | jq -R . | jq -s .)
         echo $modified_apps
