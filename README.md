@@ -1,6 +1,13 @@
-# petproject.my
-This repository contains my local K8s setup.
+<p align="center">
+  <h1 align="center">raspis</h1>
+</p>
+
+# About
+
+`raspis` is my Raspberry-Pis setup in code.
 
 # Run
 
-`ansible-playbook -i .inventory pi-0.yaml`
+```bash
+ansible-playbook -i .inventory <playbook>.yaml
+```
