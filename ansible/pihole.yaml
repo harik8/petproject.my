@@ -1,0 +1,113 @@
+---
+- name: Setup pihole
+  hosts: pi-0
+  become: yes
+
+  vars_files:
+    - "vars/vars.yaml"
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install apt packages
+      apt:
+        name: 
+          - ansible
+          - nginx
+          - podman
+          - vim
+        state: present
+
+    - name: Set bash aliases
+      copy:
+        dest: /home/pi/.bash_aliases
+        content: |
+          alias docker='podman'
+
+    - name: Update chown bash_aliases
+      ansible.builtin.file:
+        path: /home/pi/.bash_aliases
+        owner: 1000
+        group: 1000
+        mode: '0744'
+
+    - name: Source bash_aliases
+      shell: source /home/pi/.bash_aliases
+      args:
+        executable: /bin/bash
+
+    - name: Add nginx conf.d
+      copy:
+        dest: /etc/nginx/conf.d/pihole.conf
+        content: |
+          server {
+              listen 80;
+              server_name pihole.local;
+              location / {
+                proxy_pass http://127.0.0.1:8080;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+          }
+
+    - name: Restart nginx
+      systemd:
+        name: nginx
+        state: restarted
+        enabled: yes
+
+    - name: Set static IP address
+      blockinfile:
+        path: /etc/dhcpcd.conf
+        block: |
+          interface wlan0
+          static ip_address=192.168.178.246/24
+          static routers=192.168.178.1
+          static domain_name_servers=192.168.178.246 8.8.8.8
+        backup: yes
+      become: yes
+
+    - name: Creates pihole directories
+      ansible.builtin.file:
+        path: /etc/pihole/{{ item }}
+        state: directory
+        mode: '0755'
+      with_items:
+        - pihole
+        - dnsmasq.d
+        - hosts
+
+    - name: Set custom local DNS entries
+      replace:
+        path: /etc/pihole/pihole/pihole.toml
+        regexp: '(\[dns\][\s\S]*?^\s*hosts\s*=\s*)\[[^\]]*\]'
+        replace: '\1["192.168.178.246 pihole.local"]'
+
+    - name: Set listening ports
+      replace:
+        path: /etc/pihole/pihole/pihole.toml
+        regexp: '(\[webserver\][\s\S]*?^\s*port\s*=\s*).*'
+        replace: '\1"80o,443os,[::]:80o,[::]:443os"'
+    
+    # - name: Setup podman IPV6 network
+    #   shell: podman network create --ipv6 --subnet 10.80.0.0/16 --subnet fd00:addd:beee:ceee::/64 dual-stack
+    #   args:
+    #     executable: /bin/bash
+    #   become: yes
+
+    - name: Run pihole container
+      shell: podman run -d --replace --name pihole \
+            -p 53:53/tcp -p 53:53/udp -p 8443:443/tcp -p 8080:80/tcp \
+            -e TZ=Europe/Amsterdam -e FTLCONF_webserver_api_password='{{ lookup("env", "PIHOLE_PASSWORD") }}' -e FTLCONF_dns_listeningMode=all \
+            -v /etc/pihole/pihole:/etc/pihole -v /etc/pihole/dnsmasq.d:/etc/dnsmasq.d -v /etc/pihole/hosts/custom.list:/etc/pihole/custom.list \
+            --cap-add NET_ADMIN \
+            --restart unless-stopped \
+            docker.io/pihole/pihole:2025.11.1
+      args:
+        executable: /bin/bash
+      become: yes
+      

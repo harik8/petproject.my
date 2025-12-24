@@ -29,7 +29,7 @@
 
     - name: Install K3s
       shell: |
-        curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik --node-external-ip=192.168.1.7" sh -
+        curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik --node-external-ip=192.168.178.246" sh -
       args:
         executable: /bin/bash
 
@@ -37,7 +37,7 @@
       replace:
         path: /etc/rancher/k3s/k3s.yaml
         regexp: '127.0.0.1'
-        replace: '192.168.1.7'
+        replace: '192.168.178.246'
 
     - name: Ensure K3s is running
       systemd:

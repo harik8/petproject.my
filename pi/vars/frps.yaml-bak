@@ -1,0 +1,6 @@
+---
+frp_version: "0.60.0"
+frp_file: "frp_{{ frp_version }}_linux_arm64.tar.gz"
+frp_download_url: "https://github.com/fatedier/frp/releases/download/v{{ frp_version }}/{{ frp_file }}"
+role_arn: "arn:aws:iam::212104571535:role/service-role/r53-role-g7qf0ica"
+mail_address: "khprasaad+certbot@gmail.com"
