@@ -81,6 +81,15 @@
         - dnsmasq.d
         - hosts
 
+    - name: Creates .local directories
+      ansible.builtin.file:
+        path: /home/pi/.local/{{ item }}
+        state: directory
+        mode: '0755'
+      with_items:
+        - bin
+      become: no
+
     - name: Set custom local DNS entries
       replace:
         path: /etc/pihole/pihole/pihole.toml
@@ -111,3 +120,18 @@
         executable: /bin/bash
       become: yes
       
+    - name: Add cron_gpio0_site_checker script
+      copy:
+        src: ../scripts/cron_gpio0_site_checker.py
+        dest: /home/pi/.local/bin/cron_gpio0_site_checker.py
+        owner: pi
+        group: pi 
+        mode: '0755'
+
+    - name: Add cron CRON_gpio0_site_checker
+      cron:
+        name: CRON_gpio0_site_checker
+        user: root
+        minute: "*/15"
+        job: "python3 /home/pi/.local/bin/cron_gpio0_site_checker.py"
+        state: present
